@@ -56,6 +56,51 @@ ssh u2413918@222.30.45.81 "cd ~/vasp_calculations/[job_id] && sbatch run.slurm"
 **结果下载**: 计算完成后下载OUTCAR、vasprun.xml等结果文件
 **数据分析**: 使用标准工具分析计算结果
 
+### 5.1 VASPKIT后处理 (VASPKIT Post-processing)
+**安装路径**: `/Users/lijixiang/vasp-robot/vaspkit.1.3.5/`
+**配置文件**: `~/.vaspkit` (已配置PBE赝势库)
+
+**常用VASPKIT命令**:
+```bash
+# 启动VASPKIT交互模式
+vaspkit.1.3.5/bin/vaspkit
+
+# 或使用完整路径
+/Users/lijixiang/vasp-robot/vaspkit.1.3.5/bin/vaspkit
+
+# 命令行模式示例 - 生成布里渊区路径
+vaspkit.1.3.5/bin/vaspkit -task 303 -symprec 1E-5
+```
+
+**主要功能模块**:
+- **任务303**: 生成布里渊区路径 (bulk结构)
+- **任务4**: 能带结构分析和绘图
+- **任务11**: 态密度(DOS)分析
+- **任务12**: 分波态密度(PDOS)分析
+- **任务21**: 电荷密度可视化
+- **任务31**: 光学性质计算
+
+**VASPKIT示例使用**:
+```bash
+# 1. 准备POSCAR文件
+cp example_structure/POSCAR ./
+
+# 2. 生成k点路径用于能带计算
+vaspkit.1.3.5/bin/vaspkit -task 303
+
+# 3. 进行VASP计算后，分析能带结构
+# 确保有EIGENVAL, KPOINTS, vasprun.xml文件
+vaspkit.1.3.5/bin/vaspkit -task 4
+
+# 4. 生成态密度
+vaspkit.1.3.5/bin/vaspkit -task 11
+```
+
+**VASPKIT配置详情**:
+- PBE赝势库: `vaspkit.1.3.5/PBE/` (完整350+元素)
+- Python环境: `/opt/homebrew/bin/python3`
+- 支持功能: 输入文件生成、后处理分析、可视化
+
 ## 关键原则 (Key Principles)
 
 1. **完整性**: 确保科研需求完整传递给Kimi，不丢失任何信息
@@ -89,6 +134,27 @@ ssh u2413918@222.30.45.81 "squeue -u u2413918"
 scp -r u2413918@222.30.45.81:~/vasp_calculations/[job_id] ./results/
 ```
 
+### VASPKIT操作
+```bash
+# VASPKIT基本使用
+vaspkit.1.3.5/bin/vaspkit
+
+# 生成布里渊区路径 (用于能带计算)
+vaspkit.1.3.5/bin/vaspkit -task 303 -symprec 1E-5
+
+# 分析能带结构 (需要EIGENVAL, KPOINTS文件)
+vaspkit.1.3.5/bin/vaspkit -task 4
+
+# 生成态密度 (需要DOSCAR文件)
+vaspkit.1.3.5/bin/vaspkit -task 11
+
+# 生成分波态密度 (需要PROCAR文件)
+vaspkit.1.3.5/bin/vaspkit -task 12
+
+# 检查VASPKIT安装状态
+ls vaspkit.1.3.5/bin/vaspkit
+```
+
 ## 错误处理 (Error Handling)
 
 ### 常见问题及解决方案
@@ -107,6 +173,12 @@ scp -r u2413918@222.30.45.81:~/vasp_calculations/[job_id] ./results/
    - 检查OUTCAR错误信息
    - 验证输入文件完整性
    - 调整计算参数后重新提交
+
+4. **VASPKIT使用问题**
+   - 检查POTCAR路径配置: `head -10 ~/.vaspkit`
+   - 验证POSCAR文件格式正确性
+   - 确认计算结果文件完整性 (EIGENVAL, DOSCAR, PROCAR等)
+   - 重新运行VASPKIT: `vaspkit.1.3.5/bin/vaspkit`
 
 ## 质量标准 (Quality Standards)
 
