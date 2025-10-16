@@ -10,9 +10,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 
-import yaml
-
 from .conversation import ConversationManager
+from .settings import Settings, get_settings
 from .subagents import ClaudeSubagentManager
 
 
@@ -44,14 +43,22 @@ class VASPOrchestrator:
         config_path: str = "config/vasp_config.yaml",
         conversation_manager: Optional[ConversationManager] = None,
         subagent_config_path: Optional[str] = "config/claude_subagents.yaml",
+        secrets_path: str = "config/secrets.yaml",
+        settings: Optional[Settings] = None,
     ) -> None:
-        self.config = self._load_config(config_path)
+        self.settings: Settings = settings or get_settings(
+            base_config_path=config_path,
+            prompts_path="config/system_prompts.yaml",
+            secrets_path=secrets_path,
+        )
+        self.config = self.settings.base
         self.local_workspace = Path(os.path.expanduser(self.config["paths"]["local_root"]))
         self.local_workspace.mkdir(parents=True, exist_ok=True)
+        self._base_incar_defaults = self.settings.get_incar_defaults()
 
         # Allow dependency injection so the orchestrator can be reused in different workflows.
         self.conversation_manager = conversation_manager or ConversationManager(
-            "config/system_prompts.yaml"
+            settings=self.settings
         )
 
         self.subagent_manager: Optional[ClaudeSubagentManager] = None
@@ -94,7 +101,7 @@ class VASPOrchestrator:
 
         if not ai_analysis:
             ai_analysis = self._analyze_with_ai(instruction)
-        base_params = self.config["defaults"].get("incar", {}).copy()
+        base_params = self._base_incar_defaults.copy()
         jobs: List[JobSpec] = []
 
         if ai_analysis.get("material") and ai_analysis.get("calculations"):
@@ -110,27 +117,19 @@ class VASPOrchestrator:
         case_dir = Path(job_spec.paths["local_dir"])
         case_dir.mkdir(parents=True, exist_ok=True)
 
+        rendered_files = self._render_job_files(job_spec)
         generated_files: Dict[str, Path] = {}
+        hashes: Dict[str, str] = {}
 
-        incar_content = self._generate_incar(job_spec.params["incar"])
-        incar_path = case_dir / "INCAR"
-        incar_path.write_text(incar_content)
-        generated_files["INCAR"] = incar_path
-
-        kpoints_content = self._generate_kpoints(job_spec.params["kpoints"])
-        kpoints_path = case_dir / "KPOINTS"
-        kpoints_path.write_text(kpoints_content)
-        generated_files["KPOINTS"] = kpoints_path
-
-        slurm_content = self._generate_slurm_script(job_spec)
-        slurm_path = case_dir / "run.slurm"
-        slurm_path.write_text(slurm_content)
-        generated_files["run.slurm"] = slurm_path
-
-        hashes = {name: self._hash_file(path) for name, path in generated_files.items()}
+        for name, content in rendered_files.items():
+            path = case_dir / name
+            self._write_text_if_changed(path, content)
+            generated_files[name] = path
+            hashes[name] = self._hash_file(path)
 
         hashes_path = case_dir / "hashes.json"
-        hashes_path.write_text(json.dumps(hashes, indent=2))
+        hashes_content = json.dumps(hashes, indent=2)
+        self._write_text_if_changed(hashes_path, hashes_content)
         generated_files["hashes.json"] = hashes_path
 
         return PreparationArtifact(job=job_spec, hashes=hashes, generated_files=generated_files)
@@ -173,12 +172,30 @@ class VASPOrchestrator:
             paths=data["paths"],
         )
 
-    def _load_config(self, config_path: str) -> Dict[str, Any]:
-        with open(config_path, "r", encoding="utf-8") as handle:
-            return yaml.safe_load(handle)
-
     def _hash_file(self, file_path: Path) -> str:
-        return hashlib.sha256(file_path.read_bytes()).hexdigest()
+        with file_path.open("rb") as handle:
+            try:
+                return hashlib.file_digest(handle, "sha256").hexdigest()
+            except AttributeError:  # pragma: no cover - Python < 3.11 fallback
+                handle.seek(0)
+                digest = hashlib.sha256()
+                for chunk in iter(lambda: handle.read(8192), b""):
+                    digest.update(chunk)
+                return digest.hexdigest()
+
+    def _write_text_if_changed(self, target: Path, content: str) -> None:
+        if target.exists():
+            current = target.read_text()
+            if current == content:
+                return
+        target.write_text(content)
+
+    def _render_job_files(self, job_spec: JobSpec) -> Dict[str, str]:
+        return {
+            "INCAR": self._generate_incar(job_spec.params["incar"]),
+            "KPOINTS": self._generate_kpoints(job_spec.params["kpoints"]),
+            "run.slurm": self._generate_slurm_script(job_spec),
+        }
 
     def _analyze_with_ai(self, instruction: str) -> Dict[str, Any]:
         try:
@@ -351,8 +368,17 @@ class VaspAgent:
         return "\n".join(lines).strip()
 
 
-def create_vasp_agent(config_path: str = "config/vasp_config.yaml") -> VaspAgent:
+def create_vasp_agent(
+    config_path: str = "config/vasp_config.yaml",
+    *,
+    secrets_path: str = "config/secrets.yaml",
+    settings: Optional[Settings] = None,
+) -> VaspAgent:
     """Factory that wires together the orchestrator and exposes an async agent."""
 
-    orchestrator = VASPOrchestrator(config_path=config_path)
+    orchestrator = VASPOrchestrator(
+        config_path=config_path,
+        secrets_path=secrets_path,
+        settings=settings,
+    )
     return VaspAgent(orchestrator)

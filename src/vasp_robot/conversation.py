@@ -6,19 +6,41 @@ import os
 import json
 import time
 from datetime import datetime
-from typing import Dict, List, Any, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 from pathlib import Path
 import yaml
 from openai import OpenAI
+
+if TYPE_CHECKING:  # pragma: no cover - used for type hints only
+    from .settings import Settings
 
 
 class ConversationManager:
     """管理多轮对话和API调用记录"""
 
-    def __init__(self, config_path: str = "config/system_prompts.yaml"):
-        self.config = self._load_config(config_path)
+    def __init__(
+        self,
+        config_path: str = "config/system_prompts.yaml",
+        *,
+        settings: Optional["Settings"] = None,
+        secrets_path: str = "config/secrets.yaml",
+    ):
+        if settings is not None:
+            self.config = settings.prompts
+            self._secrets = settings.secrets
+        else:
+            self.config = self._load_config(config_path)
+            self._secrets = self._load_yaml_file(secrets_path)
         self.messages: List[Dict[str, str]] = []
         self.client: Optional[OpenAI] = None
+        self._service_config = {}
+        self._default_model = "kimi-k2-0905-preview"
+
+        if isinstance(self._secrets, dict):
+            kimi_config = self._secrets.get("services", {}).get("kimi", {})
+            if isinstance(kimi_config, dict):
+                self._service_config = kimi_config
+                self._default_model = kimi_config.get("model", self._default_model)
 
         # 设置持久化目录
         self.log_dir = Path("api_logs")
@@ -29,12 +51,21 @@ class ConversationManager:
 
     def _load_config(self, config_path: str) -> Dict[str, Any]:
         """加载配置文件"""
+        data = self._load_yaml_file(config_path)
+        if data:
+            return data
+        return self._get_default_config()
+
+    def _load_yaml_file(self, path: str) -> Dict[str, Any]:
         try:
-            with open(config_path, 'r', encoding='utf-8') as f:
-                return yaml.safe_load(f)
+            with open(path, 'r', encoding='utf-8') as f:
+                loaded = yaml.safe_load(f) or {}
+                return loaded if isinstance(loaded, dict) else {}
+        except FileNotFoundError:
+            return {}
         except Exception as e:
             print(f"加载配置文件失败: {e}")
-            return self._get_default_config()
+            return {}
 
     def _get_default_config(self) -> Dict[str, Any]:
         """获取默认配置"""
@@ -56,14 +87,32 @@ class ConversationManager:
 
     def _init_api_client(self):
         """初始化API客户端"""
-        api_key = os.getenv("KIMI_API_KEY")
+        api_key = self._resolve_api_key()
         if not api_key:
-            raise ValueError("KIMI_API_KEY environment variable not set")
+            raise ValueError(
+                "KIMI API key not configured. Set the KIMI_API_KEY environment "
+                "variable or update config/secrets.yaml."
+            )
 
-        self.client = OpenAI(
-            api_key=api_key,
-            base_url="https://api.moonshot.cn/v1",
-        )
+        base_url = self._service_config.get("base_url", "https://api.moonshot.cn/v1")
+        client_kwargs = {"api_key": api_key}
+        if base_url:
+            client_kwargs["base_url"] = base_url
+
+        self.client = OpenAI(**client_kwargs)
+
+    def _resolve_api_key(self) -> Optional[str]:
+        env_key = os.getenv("KIMI_API_KEY")
+        if env_key:
+            return env_key
+
+        if isinstance(self._secrets, dict):
+            api_keys = self._secrets.get("api_keys", {})
+            if isinstance(api_keys, dict):
+                candidate = api_keys.get("kimi") or api_keys.get("KIMI")
+                if candidate and "SET_ME" not in candidate:
+                    return candidate
+        return None
 
     def make_messages(self, input_text: str, system_prompt: str = None, n: int = None) -> List[Dict[str, str]]:
         """
@@ -112,8 +161,13 @@ class ConversationManager:
 
         return new_messages
 
-    def chat(self, input_text: str, system_prompt: str = None,
-             temperature: float = 0.7, model: str = "kimi-k2-0905-preview") -> Dict[str, Any]:
+    def chat(
+        self,
+        input_text: str,
+        system_prompt: str = None,
+        temperature: float = 0.7,
+        model: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """
         进行多轮对话
 
@@ -130,6 +184,9 @@ class ConversationManager:
             raise RuntimeError("API客户端未初始化")
 
         start_time = time.time()
+
+        if model is None:
+            model = self._default_model
 
         # 构建消息
         messages = self.make_messages(input_text, system_prompt)
@@ -287,6 +344,9 @@ class ConversationManager:
         child.messages = list(self.messages) if keep_history else []
         child.client = self.client
         child.log_dir = self.log_dir
+        child._secrets = self._secrets
+        child._service_config = self._service_config
+        child._default_model = self._default_model
         return child
 
     def get_conversation_summary(self) -> Dict[str, Any]:

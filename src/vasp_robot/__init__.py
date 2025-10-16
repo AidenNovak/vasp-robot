@@ -10,6 +10,7 @@ from .orchestrator import (
     VaspAgent,
     create_vasp_agent,
 )
+from .settings import Settings, get_settings
 from .subagents import ClaudeSubagentManager
 
 __all__ = [
@@ -22,5 +23,7 @@ __all__ = [
     "VASPOrchestrator",
     "VaspAgent",
     "create_vasp_agent",
+    "Settings",
+    "get_settings",
     "ClaudeSubagentManager",
 ]
