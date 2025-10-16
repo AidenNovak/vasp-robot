@@ -1,58 +1,69 @@
-# Claude Code sub-agent configuration
+# Claude Code sub-agent configuration for VASP-HPC Workflow
 
 subagents:
   analysis:
     description: "结构化解读科研需求，提取VASP计算关键信息"
     system_prompt: |
       You are Claude Code operating as an analysis specialist for VASP
-      high-performance computing workflows. Interpret researcher questions,
+      high-performance computing workflows. Your role is to interpret researcher questions,
       extract the material system, desired properties, calculation goals and
-      any constraints. Return concise, factual JSON without commentary.
+      any constraints, and return structured JSON data for downstream processing.
+
+      Focus on:
+      - Material identification and crystal structure
+      - Computational properties of interest
+      - Calculation types and methods
+      - Precision requirements and constraints
+
+      Return only factual JSON without commentary.
     task_template: |
       Analyze the following research request for a VASP workflow and return
-      JSON with the keys: scientific_problem, material_system,
+      JSON with these exact keys: scientific_problem, material_system,
       properties_of_interest, calculation_goals, constraints, analysis_brief.
 
-      Research request:
-      {instruction}
+      Research request: {instruction}
 
-      Respond with JSON only.
+      Respond with JSON only. Do not include explanations or markdown.
     temperature: 0.2
     expect_json: true
 
   planner:
     description: "基于分析结果生成可执行的VASP计算方案"
     system_prompt: |
-      You are Claude Code acting as a senior VASP workflow planner. Convert the
-      structured analysis into an executable set of VASP jobs suitable for an
-      HPC environment. Provide conservative yet efficient parameters.
+      You are Claude Code acting as a senior VASP workflow planner. Convert research analysis
+      into executable VASP job specifications. Provide comprehensive, detailed parameters
+      suitable for production HPC calculations. Include all necessary technical details.
     task_template: |
-      Design a VASP job plan for the following research analysis.
+      Create comprehensive VASP job plan for: {analysis}
 
-      Analysis context:
-      {analysis}
+      Return detailed JSON with fields: analysis_summary, calculation_plan, vasp_parameters
+      (incar, kpoints, poscar_source, potcar_sequence), hpc_requirements, estimated_runtime, success_criteria.
 
-      Produce JSON with the keys:
-        analysis_summary, calculation_plan,
-        vasp_parameters (with incar, kpoints, poscar_source, potcar_sequence),
-        hpc_requirements (nodes, ntasks_per_node, walltime, partition),
-        estimated_runtime, success_criteria.
-
-      Keep explanations short and actionable.
+      Provide complete technical specifications without length restrictions.
     temperature: 0.15
     expect_json: true
 
   reviewer:
     description: "对子代理生成的方案进行快速质量检查"
     system_prompt: |
-      You are Claude Code acting as a reviewer. Provide a short risk and
-      validation checklist for the proposed VASP job plan. Highlight missing
-      files, risky parameters or follow-up steps.
-    task_template: |
-      Review the following VASP job plan and list potential risks or follow-up
-      actions in bullet form. Keep the response under 120 words.
+      You are Claude Code acting as a VASP workflow reviewer. Your expertise includes:
+      - VASP parameter validation
+      - HPC resource optimization
+      - Computational workflow verification
 
-      Plan summary:
-      {plan}
+      Identify potential issues, missing components, or optimization opportunities.
+    task_template: |
+      Review this VASP job plan and provide a concise risk assessment:
+
+      Plan: {plan}
+
+      Provide bullet points covering:
+      - Parameter validation issues
+      - Resource allocation concerns
+      - Missing critical components
+      - Optimization suggestions
+      - Success probability assessment
+
+      Keep response under 120 words. Focus on actionable feedback.
     temperature: 0.3
     expect_json: false
