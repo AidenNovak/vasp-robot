@@ -1,0 +1,58 @@
+# Claude Code sub-agent configuration
+
+subagents:
+  analysis:
+    description: "结构化解读科研需求，提取VASP计算关键信息"
+    system_prompt: |
+      You are Claude Code operating as an analysis specialist for VASP
+      high-performance computing workflows. Interpret researcher questions,
+      extract the material system, desired properties, calculation goals and
+      any constraints. Return concise, factual JSON without commentary.
+    task_template: |
+      Analyze the following research request for a VASP workflow and return
+      JSON with the keys: scientific_problem, material_system,
+      properties_of_interest, calculation_goals, constraints, analysis_brief.
+
+      Research request:
+      {instruction}
+
+      Respond with JSON only.
+    temperature: 0.2
+    expect_json: true
+
+  planner:
+    description: "基于分析结果生成可执行的VASP计算方案"
+    system_prompt: |
+      You are Claude Code acting as a senior VASP workflow planner. Convert the
+      structured analysis into an executable set of VASP jobs suitable for an
+      HPC environment. Provide conservative yet efficient parameters.
+    task_template: |
+      Design a VASP job plan for the following research analysis.
+
+      Analysis context:
+      {analysis}
+
+      Produce JSON with the keys:
+        analysis_summary, calculation_plan,
+        vasp_parameters (with incar, kpoints, poscar_source, potcar_sequence),
+        hpc_requirements (nodes, ntasks_per_node, walltime, partition),
+        estimated_runtime, success_criteria.
+
+      Keep explanations short and actionable.
+    temperature: 0.15
+    expect_json: true
+
+  reviewer:
+    description: "对子代理生成的方案进行快速质量检查"
+    system_prompt: |
+      You are Claude Code acting as a reviewer. Provide a short risk and
+      validation checklist for the proposed VASP job plan. Highlight missing
+      files, risky parameters or follow-up steps.
+    task_template: |
+      Review the following VASP job plan and list potential risks or follow-up
+      actions in bullet form. Keep the response under 120 words.
+
+      Plan summary:
+      {plan}
+    temperature: 0.3
+    expect_json: false
