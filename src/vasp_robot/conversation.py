@@ -263,6 +263,32 @@ class ConversationManager:
         self.messages = []
         print("对话历史已清空")
 
+    def spawn_child(self, keep_history: bool = False) -> "ConversationManager":
+        """Create a lightweight child session sharing the same API client.
+
+        Claude Code often benefits from orchestrating multiple specialised
+        sub-agents that should not leak conversation state between each other.
+        This helper returns a new :class:`ConversationManager` instance that
+        shares the configuration, API client and persistence settings with the
+        parent manager while optionally copying the existing message history.
+
+        Args:
+            keep_history: Whether to copy the current message history into the
+                spawned session. Defaults to ``False`` so each sub-agent starts
+                with a clean slate.
+
+        Returns:
+            ConversationManager: A ready-to-use manager sharing the same API
+            client connection.
+        """
+
+        child = ConversationManager.__new__(ConversationManager)
+        child.config = self.config
+        child.messages = list(self.messages) if keep_history else []
+        child.client = self.client
+        child.log_dir = self.log_dir
+        return child
+
     def get_conversation_summary(self) -> Dict[str, Any]:
         """获取对话摘要"""
         if not self.messages:

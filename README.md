@@ -5,6 +5,7 @@ A complete workflow for VASP (Vienna Ab initio Simulation Package) calculations 
 ## Features
 
 - 🤖 **AI-Powered Planning**: Kimi LLM analyzes research needs and generates professional VASP calculation plans
+- 🧠 **Claude Subagents**: Optional Claude Code sub-agent stack for analysis, planning, and review with isolated contexts
 - 🔬 **Scientific Workflow**: Complete pipeline from research problem to HPC execution
 - 📋 **Intelligent Parameter Generation**: Automatically optimized VASP parameters for different calculations
 - 🛡️ **Quality Control**: Human approval required before HPC submission
@@ -99,6 +100,7 @@ vasp-robot/
 │       └── hpc_interface.py        # SSH-based HPC interface
 ├── config/
 │   ├── system_prompts.yaml         # AI system prompts
+│   ├── claude_subagents.yaml       # Claude Code sub-agent definitions
 │   ├── vasp_config.yaml            # VASP parameters
 │   ├── hpc_config.yaml             # HPC environment settings
 │   └── workflow_config.yaml        # Workflow configuration
@@ -144,12 +146,17 @@ hpc_environment:
 
 ## Claude Code Integration
 
-The system includes Claude Code integration through `.claude/CLAUDE.md`:
+### Sub-agent orchestration
 
-- Automatic workflow triggering
-- Standardized response templates
-- Error handling procedures
-- Quality control guidelines
+Claude Code can now drive the workflow through specialised sub-agents defined in `config/claude_subagents.yaml`:
+
+1. **analysis** – parses research intent into structured fields for downstream tooling.
+2. **planner** – translates the analysis into executable VASP parameters and Slurm settings.
+3. **reviewer** – optionally comments on risks, missing artefacts, or next steps.
+
+Each sub-agent runs in an isolated `ConversationManager` session to avoid history leakage and to keep responses focused. Modify the YAML templates to tune prompts, temperatures, or to add extra sub-agents for your lab’s needs.
+
+If the configuration file is absent the system automatically falls back to the original single-agent prompts so existing workflows continue to operate without change.
 
 ## Security & Reproducibility
 

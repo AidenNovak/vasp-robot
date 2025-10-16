@@ -12,11 +12,16 @@ import time
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, Optional
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 import yaml
 from dotenv import load_dotenv
 
-from src.vasp_robot import ConversationManager, HPCAutomation, create_vasp_agent
+from src.vasp_robot import (
+    ClaudeSubagentManager,
+    ConversationManager,
+    HPCAutomation,
+    create_vasp_agent,
+)
 
 
 @dataclass
@@ -59,12 +64,18 @@ class VASPResearchWorkflow:
         self.vasp_agent = create_vasp_agent()
         self.conversation_manager = ConversationManager("config/system_prompts.yaml")
 
+        self.subagent_manager: Optional[ClaudeSubagentManager] = None
+        if Path("config/claude_subagents.yaml").exists():
+            self.subagent_manager = ClaudeSubagentManager(self.conversation_manager)
+
         # 初始化HPC自动化
         self.hpc_automation = HPCAutomation(config_path)
 
         # 工作流程状态
         self.current_job = None
         self.workflow_log = []
+        self.latest_analysis_payload: Optional[Dict[str, Any]] = None
+        self.latest_plan_payload: Optional[Dict[str, Any]] = None
 
     def _load_config(self, config_path: str) -> Dict[str, Any]:
         """加载工作流程配置"""
@@ -91,6 +102,26 @@ class VASPResearchWorkflow:
     async def step1_analyze_research_request(self, user_request: str) -> ResearchRequest:
         """步骤1: 分析科研需求"""
         self._log_workflow("step1", "开始分析科研需求", {"user_request": user_request})
+
+        # 优先尝试使用Claude子代理进行结构化分析
+        if self.subagent_manager and self.subagent_manager.has_agent("analysis"):
+            try:
+                analysis_data = self.subagent_manager.analyze_instruction(user_request)
+            except Exception as exc:  # pragma: no cover - defensive logging
+                self._log_workflow("step1", f"Claude子代理分析失败: {exc}")
+            else:
+                if analysis_data:
+                    self.latest_analysis_payload = analysis_data
+                    research_request = ResearchRequest(
+                        scientific_problem=analysis_data.get("scientific_problem", ""),
+                        material_system=analysis_data.get("material_system", ""),
+                        properties_of_interest=analysis_data.get("properties_of_interest", ""),
+                        calculation_goals=analysis_data.get("calculation_goals", ""),
+                        constraints=analysis_data.get("constraints"),
+                        user_request=user_request,
+                    )
+                    self._log_workflow("step1", "科研需求分析完成(Claude子代理)", analysis_data)
+                    return research_request
 
         # 使用Kimi分析科研需求，生成标准格式
         analysis_prompt = f"""
@@ -140,6 +171,7 @@ class VASPResearchWorkflow:
                         user_request=user_request
                     )
 
+                    self.latest_analysis_payload = analysis_data
                     self._log_workflow("step1", "科研需求分析完成", analysis_data)
                     return research_request
                 else:
@@ -154,6 +186,55 @@ class VASPResearchWorkflow:
     async def step2_generate_vasp_plan(self, research_request: ResearchRequest) -> VASPJobSpec:
         """步骤2: 生成VASP计算方案"""
         self._log_workflow("step2", "开始生成VASP计算方案")
+
+        # 优先尝试使用Claude子代理生成计算方案
+        if self.subagent_manager and self.subagent_manager.has_agent("planner"):
+            try:
+                planner_input = research_request.user_request or research_request.scientific_problem
+                planner_context = self.latest_analysis_payload or asdict(research_request)
+                vasp_data = self.subagent_manager.plan_vasp_work(
+                    planner_input,
+                    analysis=planner_context,
+                )
+            except Exception as exc:  # pragma: no cover - defensive logging
+                self._log_workflow("step2", f"Claude子代理方案生成失败: {exc}")
+                vasp_data = {}
+
+            if vasp_data:
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                job_id = f"{research_request.material_system}_{timestamp}" if research_request.material_system else timestamp
+
+                job_spec = VASPJobSpec(
+                    job_id=job_id,
+                    analysis_summary=vasp_data.get("analysis_summary", ""),
+                    calculation_plan=vasp_data.get("calculation_plan", ""),
+                    vasp_parameters=vasp_data.get("vasp_parameters", {}),
+                    hpc_requirements=vasp_data.get("hpc_requirements", {}),
+                    estimated_runtime=vasp_data.get("estimated_runtime", ""),
+                    success_criteria=vasp_data.get("success_criteria", ""),
+                    incar_content=self._generate_incar_content(
+                        vasp_data.get("vasp_parameters", {}).get("incar", {})
+                    ),
+                    kpoints_content=self._generate_kpoints_content(
+                        vasp_data.get("vasp_parameters", {}).get("kpoints", {})
+                    ),
+                    poscar_source=vasp_data.get("vasp_parameters", {}).get("poscar_source", ""),
+                    potcar_sequence=vasp_data.get("vasp_parameters", {}).get("potcar_sequence", []),
+                    slurm_script=self._generate_slurm_content(
+                        job_id,
+                        vasp_data.get("hpc_requirements", {}),
+                    ),
+                )
+
+                self.current_job = job_spec
+                self.latest_plan_payload = vasp_data
+
+                review_notes = self.subagent_manager.review_plan(vasp_data)
+                if review_notes:
+                    self._log_workflow("step2_review", "Claude reviewer反馈", review_notes)
+
+                self._log_workflow("step2", "VASP计算方案生成完成(Claude子代理)", {"job_id": job_id})
+                return job_spec
 
         # 构建详细的VASP计算提示
         vasp_prompt = f"""

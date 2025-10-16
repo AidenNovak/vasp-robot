@@ -13,6 +13,7 @@ from typing import Any, Dict, Iterable, List, Optional
 import yaml
 
 from .conversation import ConversationManager
+from .subagents import ClaudeSubagentManager
 
 
 @dataclass
@@ -42,6 +43,7 @@ class VASPOrchestrator:
         self,
         config_path: str = "config/vasp_config.yaml",
         conversation_manager: Optional[ConversationManager] = None,
+        subagent_config_path: Optional[str] = "config/claude_subagents.yaml",
     ) -> None:
         self.config = self._load_config(config_path)
         self.local_workspace = Path(os.path.expanduser(self.config["paths"]["local_root"]))
@@ -51,6 +53,13 @@ class VASPOrchestrator:
         self.conversation_manager = conversation_manager or ConversationManager(
             "config/system_prompts.yaml"
         )
+
+        self.subagent_manager: Optional[ClaudeSubagentManager] = None
+        if subagent_config_path and Path(subagent_config_path).exists():
+            self.subagent_manager = ClaudeSubagentManager(
+                self.conversation_manager,
+                config_path=subagent_config_path,
+            )
 
         # Maintain compatibility with legacy callers that expect an OpenAI client attribute.
         self.client = self.conversation_manager.client
@@ -78,7 +87,13 @@ class VASPOrchestrator:
     def plan_jobs(self, instruction: str) -> List[JobSpec]:
         """Parse natural language instructions into job specifications using the LLM."""
 
-        ai_analysis = self._analyze_with_ai(instruction)
+        ai_analysis: Dict[str, Any] = {}
+
+        if self.subagent_manager and self.subagent_manager.has_agent("analysis"):
+            ai_analysis = self.subagent_manager.analyze_instruction(instruction)
+
+        if not ai_analysis:
+            ai_analysis = self._analyze_with_ai(instruction)
         base_params = self.config["defaults"].get("incar", {}).copy()
         jobs: List[JobSpec] = []
 
