@@ -76,13 +76,13 @@ python main.py
 
 ```bash
 # Test HPC connection
-python src/hpc_automation.py test
+python src/vasp_robot/hpc_automation.py test
 
 # Monitor job status
-python src/hpc_automation.py status <job_id>
+python src/vasp_robot/hpc_automation.py status <job_id>
 
 # Download results
-python src/hpc_automation.py download <job_id>
+python src/vasp_robot/hpc_automation.py download <job_id>
 ```
 
 ## Project Structure
@@ -90,12 +90,13 @@ python src/hpc_automation.py download <job_id>
 ```
 vasp-robot/
 ├── src/
-│   ├── vasp_orchestrator.py        # Core VASP calculation logic
-│   ├── conversation_manager.py     # Kimi LLM integration
-│   ├── hpc_automation.py           # HPC cluster automation
-│   ├── file_manager.py             # File management
-│   ├── prompt_loader.py            # System prompt management
-│   └── vasp_input_generator.py     # VASP file generation
+│   ├── __init__.py
+│   └── vasp_robot/
+│       ├── __init__.py             # Unified package exports
+│       ├── conversation.py         # Kimi LLM integration helpers
+│       ├── orchestrator.py         # Core VASP calculation logic & agent
+│       ├── hpc_automation.py       # HPC cluster automation
+│       └── hpc_interface.py        # SSH-based HPC interface
 ├── config/
 │   ├── system_prompts.yaml         # AI system prompts
 │   ├── vasp_config.yaml            # VASP parameters
@@ -176,7 +177,7 @@ The system includes Claude Code integration through `.claude/CLAUDE.md`:
 python test_kimi.py
 
 # Test HPC connection
-python src/hpc_automation.py test
+python src/vasp_robot/hpc_automation.py test
 
 # Test complete workflow
 python vasp_research_workflow.py "测试SiC几何优化"

@@ -9,7 +9,7 @@ import asyncio
 from pathlib import Path
 from dotenv import load_dotenv
 
-from src.vasp_orchestrator import create_vasp_agent
+from src.vasp_robot import create_vasp_agent
 
 
 async def main():
