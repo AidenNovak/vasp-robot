@@ -8,7 +8,6 @@ VASP Scientific Computing Workflow Script
 import asyncio
 import json
 import os
-import sys
 import time
 from datetime import datetime
 from pathlib import Path
@@ -17,12 +16,7 @@ from dataclasses import dataclass
 import yaml
 from dotenv import load_dotenv
 
-# 添加src目录到Python路径
-sys.path.append('src')
-
-from vasp_orchestrator import create_vasp_agent
-from src.conversation_manager import ConversationManager
-from src.hpc_automation import HPCAutomation
+from src.vasp_robot import ConversationManager, HPCAutomation, create_vasp_agent
 
 
 @dataclass

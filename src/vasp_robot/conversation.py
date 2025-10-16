@@ -323,16 +323,3 @@ class ConversationManager:
         print(f"总Token数: {total_tokens:,}")
         print(f"总响应时间: {total_time:.2f}秒")
         print(f"平均响应时间: {total_time/total_calls:.2f}秒")
-
-
-    # 显示对话摘要
-    print(f"\n📋 对话摘要:")
-    summary = cm.get_conversation_summary()
-    for key, value in summary.items():
-        print(f"  {key}: {value}")
-
-    # 保存对话
-    cm.save_conversation("test_conversation.json")
-
-    # 显示API统计
-    cm.print_api_statistics()
