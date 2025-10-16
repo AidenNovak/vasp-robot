@@ -1,0 +1,140 @@
+# VASP-HPC 科研计算工作流程配置
+# VASP Scientific Computing Workflow Configuration
+
+workflow:
+  name: "VASP-HPC Scientific Computing Pipeline"
+  version: "1.0"
+
+  # 工作流程步骤定义
+  steps:
+    1:
+      name: "科研需求分析"
+      description: "Claude Code接收科研问题，转述给Kimi进行分析"
+      agent: "claude-code"
+      action: "启动科研需求分析"
+
+    2:
+      name: "VASP计算方案设计"
+      description: "Kimi分析科研需求，生成VASP计算参数和建议"
+      agent: "kimi-llm"
+      action: "生成计算方案"
+      output_format: "structured-json"
+
+    3:
+      name: "计算文件生成"
+      description: "Claude Code根据Kimi输出生成VASP输入文件"
+      agent: "claude-code"
+      action: "生成VASP文件"
+
+    4:
+      name: "HPC作业提交"
+      description: "连接HPC集群，提交VASP计算作业"
+      agent: "claude-code"
+      action: "HPC提交和监控"
+
+    5:
+      name: "结果分析"
+      description: "下载计算结果，进行数据分析"
+      agent: "claude-code"
+      action: "结果分析和可视化"
+
+# 标准化的输入输出格式
+formats:
+  research_request:
+    description: "科研需求的标准格式"
+    fields:
+      - "scientific_problem"    # 科学问题描述
+      - "material_system"       # 材料体系
+      - "properties_of_interest" # 关注的性质
+      - "calculation_goals"     # 计算目标
+      - "constraints"           # 约束条件（可选）
+
+  kimi_response:
+    description: "Kimi输出的标准格式"
+    required_fields:
+      - "analysis_summary"      # 分析总结
+      - "calculation_plan"      # 计算计划
+      - "vasp_parameters"       # VASP参数配置
+      - "hpc_requirements"      # HPC资源需求
+      - "estimated_runtime"     # 预估运行时间
+      - "success_criteria"      # 成功标准
+    format: "json"
+
+  vasp_job_spec:
+    description: "VASP作业规范"
+    fields:
+      - "job_id"
+      - "incar_content"
+      - "kpoints_content"
+      - "poscar_source"
+      - "potcar_sequence"
+      - "slurm_script"
+      - "hpc_resources"
+
+# HPC环境配置
+hpc_environment:
+  cluster:
+    name: "NK-HPC"
+    host: "222.30.45.81"
+    port: 20010
+    user: "u2413918"
+    work_dir: "/home/u2413918/vasp_calculations"
+
+  vasp_module:
+    name: "app/vasp/6.3.2/cpu"
+    executable: "vasp_std"
+    potcar_path: "/public/apps/vasp/6.3.2/potentials/pbe"
+
+  default_resources:
+    nodes: 1
+    ntasks_per_node: 48
+    walltime: "02:00:00"
+    partition: "cpu"
+
+  connection:
+    timeout: 30
+    retries: 3
+    strict_host_key_checking: "no"
+
+# 质量控制
+quality_control:
+  validation:
+    - "验证VASP参数合理性"
+    - "检查HPC资源需求"
+    - "确认输入文件完整性"
+
+  error_handling:
+    - "HPC连接失败处理"
+    - "VASP计算错误检测"
+    - "作业队列超时处理"
+
+  monitoring:
+    - "作业进度跟踪"
+    - "计算资源使用监控"
+    - "结果文件完整性检查"
+
+# Claude Code 指令集
+claude_code_commands:
+  initiate_workflow:
+    description: "启动VASP计算工作流程"
+    usage: "/vasp-start <research_problem_description>"
+
+  analyze_requirements:
+    description: "分析科研需求"
+    usage: "/vasp-analyze <detailed_requirements>"
+
+  generate_inputs:
+    description: "生成VASP输入文件"
+    usage: "/vasp-generate <kimi_response_json>"
+
+  submit_job:
+    description: "提交HPC计算作业"
+    usage: "/vasp-submit <job_specification>"
+
+  monitor_job:
+    description: "监控计算作业状态"
+    usage: "/vasp-monitor <job_id>"
+
+  analyze_results:
+    description: "分析计算结果"
+    usage: "/vasp-analyze-results <job_id>"

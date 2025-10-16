@@ -1,0 +1,24 @@
+# VASP-HPC Orchestrator Configuration
+# Using existing NK-HPC SSH configuration from ~/.ssh/config
+
+ssh:
+  host: "nk-hpc"  # Uses SSH config from ~/.ssh/config
+  port: 20010
+  user: "u2413918"
+  config_file: "~/.ssh/config"  # Reference to existing SSH config
+
+paths:
+  remote_root: "/home/u2413918/vasp_calculations"
+  local_root: "~/vasp-workspace"
+
+env:
+  vasp_module: "app/vasp/6.3.2/cpu"
+  vasp_exec: "$HOME/vasp.6.3.2/bin/vasp_std"
+  potcar_root: "/home/u2413918/potpaw_PBE.64"
+
+hpc:
+  partition: "cpu"
+  nodes: 1
+  ntasks_per_node: 48
+  walltime_minutes: 120
+

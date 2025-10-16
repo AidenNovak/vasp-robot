@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+vasp-robot-venv/
+env/
+ENV/
+
+# Environment variables
+.env
+
+# VASP workspace
+vasp-workspace/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Output files
+*.out
+OUTCAR
+vasprun.xml
+EIGENVAL
+DOSCAR
+CHGCAR
+CHG
+WAVECAR
+PROCAR
+
+# Local temp
+tmp/
+temp/

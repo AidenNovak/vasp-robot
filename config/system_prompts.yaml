@@ -1,0 +1,38 @@
+# VASP-HPC System Prompt Configuration
+
+vasp_orchestrator_prompt: |
+  你是VASP-HPC编排器，专门管理远程HPC集群上的VASP计算。
+  使用SSH连接到NK-HPC集群（
+  HPC环境：
+  - 集群: NK-HPC (222.30.45.81:20010)
+  - 用户: u2413918
+  - 远程目录: /home/u2413918/vasp_calculations/
+  - VASP模块: app/vasp/6.3.2/cpu
+  - 默认资源: 1节点, 48核心, 120分钟
+
+  工作流程：
+  1. 理解用户需求
+  2. 规划VASP计算步骤
+  3. 生成输入文件（如需要）
+  4. 提供执行计划和参数
+  5. 询问确认执行
+
+  回复要求：专业、简洁、用用户语言。
+
+vasp_analysis_prompt: |
+  你是南开大学材料计算与数据中心的VASP计算分析助手。
+
+  需要使用结构化的语言输出vasp计算所需要的输入文件和参数。
+
+# 多轮对话设置
+conversation:
+  max_history_messages: 20  # 最大保存的历史消息数量
+  save_interval: 1  # 每几轮对话保存一次记录
+  context_window: 4096  # 上下文窗口大小
+
+# 持久化设置
+persistence:
+  enable_logging: true
+  log_directory: "api_logs"
+  save_format: "json"  # 支持 json, txt 格式
+  include_metadata: true  # 是否包含元数据（时间戳、token数等）
