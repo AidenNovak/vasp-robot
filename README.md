@@ -35,6 +35,10 @@ cp .env.example .env
 
 # Set your Kimi API key
 # Edit .env and add: KIMI_API_KEY=your_kimi_api_key_here
+
+# Optionally manage credentials in config/secrets.yaml for easier updates
+cp config/secrets.yaml config/secrets.local.yaml
+# Edit config/secrets.local.yaml and replace "SET_ME" with your key
 ```
 
 ### 3. Run the Workflow
@@ -103,6 +107,7 @@ vasp-robot/
 │   ├── system_prompts.yaml         # AI system prompts
 │   ├── claude_subagents.yaml       # Claude Code sub-agent definitions
 │   ├── vasp_config.yaml            # VASP parameters
+│   ├── secrets.yaml                # API keys and service overrides (template)
 │   ├── hpc_config.yaml             # HPC environment settings
 │   └── workflow_config.yaml        # Workflow configuration
 ├── templates/                      # VASP template files
@@ -144,6 +149,12 @@ hpc_environment:
 - `vasp_orchestrator_prompt`: Main dialogue system prompt
 - `vasp_analysis_prompt`: VASP calculation analysis prompt
 - Customizable for different research domains
+
+### Secrets Management (`config/secrets.yaml`)
+
+- Stores API keys and service endpoints separate from source code
+- Environment variables (e.g. `KIMI_API_KEY`) still take precedence when set
+- Copy to `config/secrets.local.yaml` to keep machine-specific credentials out of version control
 
 ## Claude Code Integration
 

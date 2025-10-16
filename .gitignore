@@ -11,6 +11,7 @@ ENV/
 
 # Environment variables
 .env
+config/secrets.local.yaml
 
 # VASP workspace
 vasp-workspace/
