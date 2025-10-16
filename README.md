@@ -90,24 +90,29 @@ python src/hpc_automation.py download <job_id>
 ```
 vasp-robot/
 ├── src/
-│   ├── vasp_orchestrator.py        # Core VASP calculation logic
-│   ├── conversation_manager.py     # Kimi LLM integration
-│   ├── hpc_automation.py           # HPC cluster automation
-│   ├── file_manager.py             # File management
-│   ├── prompt_loader.py            # System prompt management
-│   └── vasp_input_generator.py     # VASP file generation
+│   ├── vasp_orchestrator.py        # Core VASP calculation logic and AI integration
+│   ├── conversation_manager.py     # Kimi LLM API integration and dialogue management
+│   ├── hpc_automation.py           # HPC cluster automation and file transfer
+│   └── hpc_interface.py            # HPC SSH interface and job management
 ├── config/
-│   ├── system_prompts.yaml         # AI system prompts
-│   ├── vasp_config.yaml            # VASP parameters
-│   ├── hpc_config.yaml             # HPC environment settings
-│   └── workflow_config.yaml        # Workflow configuration
-├── templates/                      # VASP template files
-├── .claude/                        # Claude Code integration
-├── main.py                         # Interactive entry point
-├── vasp_research_workflow.py       # Complete workflow runner
-├── test_kimi.py                    # Kimi integration test
+│   ├── system_prompts.yaml         # AI system prompts for VASP analysis
+│   ├── vasp_config.yaml            # Default VASP parameters and settings
+│   └── workflow_config.yaml        # HPC environment and workflow configuration
+├── templates/
+│   ├── kpoints/                    # K-points template files
+│   │   └── kpath_SiC.txt          # SiC k-path template
+│   └── structures/                 # Structure template files
+│       └── SiC_POSCAR.txt         # SiC POSCAR template
+├── .claude/
+│   ├── CLAUDE.md                   # Claude Code integration and workflow settings
+│   └── settings.local.json         # Local Claude Code settings
+├── main.py                         # Interactive VASP assistant entry point
+├── vasp_research_workflow.py       # Complete automated workflow runner
 ├── requirements.txt                # Python dependencies
-└── .env.example                   # Environment template
+├── .env.example                   # Environment variables template
+├── .gitignore                     # Git ignore rules
+├── LICENSE                        # MIT License file
+└── README.md                      # Project documentation
 ```
 
 ## Configuration
@@ -172,9 +177,6 @@ The system includes Claude Code integration through `.claude/CLAUDE.md`:
 ### Testing
 
 ```bash
-# Test Kimi integration
-python test_kimi.py
-
 # Test HPC connection
 python src/hpc_automation.py test
 
