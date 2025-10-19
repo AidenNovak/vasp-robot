@@ -1,0 +1,42 @@
+# SiC Surface Relaxation INCAR
+# SiC表面结构优化INCAR参数 (用于2DEG研究)
+
+SYSTEM = SiC Surface with H-termination for 2DEG Study
+ENCUT = 600
+EDIFF = 1E-5
+EDIFFG = -0.02
+ISMEAR = 0
+SIGMA = 0.05
+IBRION = 2
+NSW = 150
+ISIF = 2  # 仅优化离子位置，固定晶格参数
+NELM = 100
+NELMIN = 4
+ALGO = Normal
+LREAL = Auto
+ADDGRID = .TRUE.
+LCHARG = .TRUE.
+LWAVE = .TRUE.
+PREC = Accurate
+# 偶极修正 (关键表面计算)
+LDIPOL = .TRUE.
+IDIPOL = 3  # Z方向偶极修正
+LVHAR = .TRUE.
+# 自旋极化检查
+ISPIN = 1
+MAGMOM = 1*0.0
+# D3色散修正
+IVDW = 12
+LVDW = .TRUE.
+# 表面计算增强收敛
+NELM = 200
+NELMIN = 8
+# 输出控制
+LORBIT = 11
+NWRITE = 2
+# 电荷密度分析
+LCHARG = .TRUE.
+LVTOT = .TRUE.
+# 局部态密度
+LPARD = .TRUE.
+EINT = -5.0 0.0

@@ -1,0 +1,43 @@
+# SiC Surface Electronic Structure INCAR
+# SiC表面电子结构计算INCAR参数 (2DEG核心分析)
+
+SYSTEM = SiC Surface Electronic Structure for 2DEG Analysis
+ENCUT = 600
+EDIFF = 1E-6
+ISMEAR = -5  # 四面体方法 (适合态密度计算)
+SIGMA = 0.01
+IBRION = -1  # 静态计算，无离子移动
+NSW = 0
+NELM = 200
+NELMIN = 8
+ALGO = Normal
+LREAL = Auto
+ADDGRID = .TRUE.
+LCHARG = .TRUE.
+LWAVE = .TRUE.
+PREC = Accurate
+# 偶极修正
+LDIPOL = .TRUE.
+IDIPOL = 3
+LVHAR = .TRUE.
+# 自旋极化
+ISPIN = 1
+MAGMOM = 1*0.0
+# D3色散修正
+IVDW = 12
+LVDW = .TRUE.
+# 高精度态密度计算参数
+NEDOS = 5000
+LORBIT = 11
+# 能带结构计算准备
+ICHARG = 11  # 从已有电荷密度开始
+# 费米能级精确定位
+FERWEIGHT = 0.01
+# 输出控制
+NWRITE = 2
+LVTOT = .TRUE.
+LPARD = .TRUE.
+# 局域态密度能量范围
+EINT = -10.0 5.0
+# 非自洽计算用于能带结构
+# (后续将用ICHARG=11进行不同k点路径计算)

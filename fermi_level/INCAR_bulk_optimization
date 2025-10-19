@@ -1,0 +1,28 @@
+# SiC Bulk Optimization INCAR
+# 块体SiC结构优化INCAR参数
+
+SYSTEM = SiC Bulk Optimization for 2DEG Surface Study
+ENCUT = 600
+EDIFF = 1E-6
+EDIFFG = -0.01
+ISMEAR = 0
+SIGMA = 0.05
+IBRION = 2
+NSW = 100
+ISIF = 3
+NELM = 100
+NELMIN = 4
+ALGO = Normal
+LREAL = Auto
+ADDGRID = .TRUE.
+LCHARG = .TRUE.
+LWAVE = .TRUE.
+PREC = Accurate
+# 检查磁性和自旋极化
+ISPIN = 1
+# D3色散修正
+IVDW = 12
+LVDW = .TRUE.
+# 输出控制
+LORBIT = 11
+NWRITE = 2

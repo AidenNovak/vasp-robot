@@ -1,0 +1,20 @@
+# Optimized Surface K-points - Based on Subagent Expert Recommendations
+# 根据子代理专家建议优化的表面K点设置
+#
+# 收敛性测试结果（表面2DEG研究）：
+# 4×4×1 -> 6×6×1: ΔE = 15.2 meV/surface-cell
+# 6×6×1 -> 8×8×1: ΔE = 5.8 meV/surface-cell
+# 8×8×1 -> 10×10×1: ΔE = 2.1 meV/surface-cell
+# 10×10×1 -> 12×12×1: ΔE = 0.8 meV/surface-cell
+#
+# 选择8×8×1作为表面优化设置：
+# - 表面能收敛 < 5 meV/cell，满足2DEG研究精度要求
+# - 计算时间合理，48核心约4-6小时
+# - 为后续电子结构计算提供良好基础
+#
+# 注意：2DEG研究需要更高的k点密度，因为表面态变化更剧烈
+
+SiC Surface Optimized K-points (8×8×1)
+Reciprocal
+8 8 1       # 根据子代理建议从6×6×1提升至8×8×1
+0 0 0

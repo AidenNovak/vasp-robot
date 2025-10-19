@@ -1,0 +1,137 @@
+{
+  "job_id": "SiC surfaces with H-termination_20251019_135907",
+  "analysis_summary": {
+    "problem_statement": "Investigate two-dimensional electron gas (2DEG) formation at hydrogen-terminated SiC surfaces through systematic DFT calculations. The study aims to understand how surface orientation and H-termination configuration influence electronic properties near the Fermi level, potentially revealing metallic surface states characteristic of 2DEG systems.",
+    "computational_approach": "Density Functional Theory (DFT) using VASP with PBEsol functional for accurate surface properties, D3 dispersion correction for weak interactions, and spin-polarized calculations. Surface slab models with 15-20 \u00c5 vacuum spacing and dipole correction to avoid spurious interactions.",
+    "key_challenges": [
+      "Accurate Fermi level positioning for 2DEG detection",
+      "Surface slab convergence with respect to thickness and vacuum",
+      "Proper treatment of surface dipoles and charge redistribution",
+      "Systematic sampling of surface terminations and configurations",
+      "Distinguishing true 2DEG states from surface resonances"
+    ],
+    "expected_outcomes": [
+      "Electronic band structures showing metallic surface states",
+      "Layer-resolved DOS revealing charge confinement at surface",
+      "Charge density plots demonstrating 2D character",
+      "Surface formation energies for stability analysis",
+      "Transport parameters (effective masses, Fermi velocities)"
+    ]
+  },
+  "calculation_plan": {
+    "phase_1": {
+      "name": "Bulk SiC Optimization",
+      "description": "Optimize bulk SiC polymorphs (3C, 4H, 6H) as reference for surface calculations",
+      "structures": [
+        "3C-SiC (zincblende)",
+        "4H-SiC (hexagonal)",
+        "6H-SiC (hexagonal)"
+      ],
+      "calculations": [
+        "volume optimization",
+        "cell shape relaxation",
+        "ionic relaxation"
+      ],
+      "convergence_criteria": {
+        "energy": 1e-06,
+        "forces": 0.0001,
+        "stress": 0.1
+      }
+    },
+    "phase_2": {
+      "name": "Surface Model Construction",
+      "description": "Generate surface slabs with different orientations and H-terminations",
+      "surface_orientations": [
+        {
+          "miller": [
+            1,
+            1,
+            1
+          ],
+          "polar": true,
+          "layers": 12
+        },
+        {
+          "miller": [
+            0,
+            0,
+            1
+          ],
+          "polar": false,
+          "layers": 16
+        },
+        {
+          "miller": [
+            1,
+            -1,
+            0
+          ],
+          "non-polar": true,
+          "layers": 14
+        },
+        {
+          "miller": [
+            1,
+            1,
+            0
+          ],
+          "non-polar": true,
+          "layers": 14
+        }
+      ],
+      "termination_types": [
+        "Si-terminated + H",
+        "C-terminated + H",
+        "Mixed Si/C + H",
+        "Full H-coverage (1x1)",
+        "Partial H-coverage (2x1, 3x3)"
+      ],
+      "vacuum_thickness": 20,
+      "dipole_correction": true
+    },
+    "phase_3": {
+      "name": "Electronic Structure Calculations",
+      "description": "Comprehensive electronic structure analysis for 2DEG detection",
+      "calculations": [
+        "Self-consistent field (SCF) with high k-point density",
+        "Non-SCF for detailed DOS (5000+ k-points)",
+        "Band structure along high-symmetry paths",
+        "Layer-projected DOS",
+        "Charge density analysis",
+        "Fermi surface calculations"
+      ],
+      "special_parameters": {
+        "ismear": -5,
+        "sigma": 0.01,
+        "nedos": 2000,
+        "lorbit": 11,
+        "lvhar": true
+      }
+    },
+    "phase_4": {
+      "name": "Transport Properties",
+      "description": "Calculate transport parameters for 2DEG characterization",
+      "calculations": [
+        "Effective mass tensor",
+        "Fermi velocity",
+        "2D carrier density",
+        "Quantum capacitance"
+      ],
+      "method": "Finite differences for effective masses, BoltzTraP for transport coefficients"
+    },
+    "workflow_summary": {
+      "total_structures": 48,
+      "total_calculations": 240,
+      "estimated_total_time": "15000 CPU-hours"
+    }
+  },
+  "vasp_parameters": {},
+  "hpc_requirements": {},
+  "estimated_runtime": "",
+  "success_criteria": "",
+  "incar_content": "VASP INCAR file\n====================\n",
+  "kpoints_content": "KPOINTS file (content should be provided by AI)",
+  "poscar_source": "",
+  "potcar_sequence": [],
+  "slurm_script": "#!/bin/bash\n#SBATCH -p cpu\n#SBATCH -N 1\n#SBATCH --ntasks-per-node=48\n#SBATCH -J SiC surfaces with H-termination_20251019_135907\n#SBATCH -o vasp.out\n#SBATCH -t 02:00:00\n\nmodule load app/vasp/6.3.2/cpu\nexport VASP_PP_PATH=/public/apps/vasp/6.3.2/potentials/pbe\n\necho \"Starting VASP calculation for SiC surfaces with H-termination_20251019_135907\"\necho \"Start time: $(date)\"\necho \"Job ID: $SLURM_JOB_ID\"\necho \"Nodes: $SLURM_JOB_NUM_NODES\"\necho \"Tasks: $SLURM_NTASKS\"\n\n# Build POTCAR (example - should be customized based on elements)\n# cat $VASP_PP_PATH/*/POTCAR > POTCAR\n\nmpirun -np $SLURM_NTASKS vasp_std\n\necho \"VASP calculation completed\"\necho \"End time: $(date)\"\n"
+}

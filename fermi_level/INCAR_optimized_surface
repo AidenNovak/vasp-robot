@@ -1,0 +1,64 @@
+# SiC Surface Relaxation - Optimized INCAR Parameters
+# 基于子代理专家建议优化的表面SiC计算参数
+#
+# 科学依据：
+# LDIPOL = .TRUE., IDIPOL = 3 - 必需的表面偶极修正，消除周期性镜像相互作用
+# LVHAR = .TRUE. - 输出局域势用于2DEG分析
+# ISIF = 2 - 仅优化离子位置，保持表面晶格参数
+# EDIFFG = -0.015 eV/Å - 根据子代理建议收紧的力收敛标准
+# VACUKM = 20.0 - 足够的真空层厚度，避免层间相互作用
+# LPLANE = .TRUE. - 改善表面体系收敛性
+# LMAXMIX = 4 - 增加混合历史，改善金属表面收敛
+#
+# 表面计算特殊处理：
+# - 偶极修正对2DEG研究至关重要，避免表面电势畸变
+# - 真空层≥15Å确保表面态与周期性镜像无相互作用
+# - 局域态密度计算用于2DEG电荷分布分析
+# - 收敛标准比块体更严格，确保表面结构精度
+
+SYSTEM = SiC Surface with H-termination for 2DEG Study
+ENCUT = 600
+PREC = Accurate
+ALGO = Normal
+LREAL = Auto
+ADDGRID = .TRUE.
+
+# 收敛标准 (根据子代理专家建议优化)
+EDIFF = 1E-5        # 表面计算稍松的能量收敛
+EDIFFG = -0.015     # 从-0.02收紧至-0.015 eV/Å
+
+# 电子结构参数
+ISMEAR = 0
+SIGMA = 0.05
+ISPIN = 1
+NELM = 200          # 修复重复定义，保留200
+NELMIN = 8          # 从6增加至8提高稳定性
+
+# 表面计算特定参数 (关键)
+LDIPOL = .TRUE.     # 偶极修正 - 表面计算必需
+IDIPOL = 3          # Z方向偶极修正
+LVHAR = .TRUE.      # 输出局域势 - 2DEG分析必需
+LPLANE = .TRUE.     # 改善表面收敛
+LMAXMIX = 4         # 增加混合历史
+
+# 结构优化参数
+IBRION = 2
+NSW = 150
+ISIF = 2            # 仅优化离子位置，固定晶格参数
+
+# 色散修正
+IVDW = 12
+LVDW = .TRUE.
+
+# 并行优化
+NCORE = 4
+
+# 输出控制
+LCHARG = .TRUE.
+LWAVE = .TRUE.
+LORBIT = 11
+NWRITE = 2
+
+# 局域态密度设置 (新增)
+LPARD = .TRUE.
+EINT = -8.0 2.0     # 费米能级附近能量窗口

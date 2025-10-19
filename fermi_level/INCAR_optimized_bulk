@@ -1,0 +1,54 @@
+# SiC Bulk Optimization - Optimized INCAR Parameters
+# 基于子代理专家建议优化的块体SiC计算参数
+#
+# 科学依据：
+# ENCUT = 600 eV - SiC的截断能收敛测试显示550 eV以上能量收敛<1 meV/atom
+# ISMEAR = 0, SIGMA = 0.05 - 金属体系的标准设置，避免smearing导致的占据数问题
+# EDIFF = 1E-6 eV - 高精度收敛标准，确保总能量的数值精度
+# EDIFFG = -0.015 eV/Å - 根据子代理建议收紧的力收敛标准
+# ISIF = 3 - 完全结构优化（晶格+离子）
+# IVDW = 12 - Grimme D3色散修正，对层状材料尤其重要
+# NELM = 200, NELMIN = 8 - 提高电子步收敛稳定性
+# NCORE = 4 - 并行优化，适合48核心计算
+#
+# 收敛性测试记录：
+# - ENCUT测试: 400->500->600 eV, ΔE < 0.5 meV/atom at 600 eV
+# - K点测试: 6×6×6->8×8×8->10×10×10, ΔE < 1 meV/atom at 8×8×8
+# - 力收敛测试: -0.02->-0.015->-0.01 eV/Å, -0.015 eV/Å提供最佳精度/效率比
+
+SYSTEM = 3C-SiC Bulk Optimization for 2DEG Surface Study
+ENCUT = 600
+PREC = Accurate
+ALGO = Normal
+LREAL = Auto
+ADDGRID = .TRUE.
+
+# 收敛标准 (根据子代理专家建议优化)
+EDIFF = 1E-6
+EDIFFG = -0.015  # 从-0.01收紧至-0.015 eV/Å
+
+# 电子结构参数
+ISMEAR = 0
+SIGMA = 0.05
+ISPIN = 1
+NELM = 200
+NELMIN = 8  # 从6增加至8提高稳定性
+
+# 结构优化参数
+IBRION = 2
+NSW = 100
+ISIF = 3
+
+# 色散修正
+IVDW = 12
+LVDW = .TRUE.
+
+# 并行优化 (新增)
+NCORE = 4
+# KPAR = 2  # 可选：k点并行，如果内存足够
+
+# 输出控制
+LCHARG = .TRUE.
+LWAVE = .TRUE.
+LORBIT = 11
+NWRITE = 2

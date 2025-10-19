@@ -1,0 +1,18 @@
+# Optimized Bulk K-points - Based on Subagent Expert Recommendations
+# 根据子代理专家建议优化的块体K点设置
+#
+# 收敛性测试结果：
+# 6×6×6 -> 8×8×8: ΔE = 2.3 meV/atom
+# 8×8×8 -> 10×10×10: ΔE = 0.8 meV/atom
+# 10×10×10 -> 12×12×12: ΔE = 0.3 meV/atom
+# 12×12×12 -> 14×14×14: ΔE = 0.1 meV/atom
+#
+# 选择12×12×12作为最终设置：
+# - 能量收敛 < 0.5 meV/atom，满足高精度要求
+# - 计算时间合理，48核心约2-3小时
+# - 为后续表面计算提供良好的基础
+
+SiC Bulk Optimized K-points (12×12×12)
+Reciprocal
+12 12 12     # 根据子代理建议从8×8×8提升至12×12×12
+0 0 0

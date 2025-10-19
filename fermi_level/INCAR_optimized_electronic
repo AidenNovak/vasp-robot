@@ -1,0 +1,66 @@
+# SiC Surface Electronic Structure - Optimized INCAR Parameters
+# 基于子代理专家建议优化的电子结构计算参数
+#
+# 科学依据：
+# ISMEAR = -5, SIGMA = 0.01 - 四面体方法，态密度计算的最佳选择
+# NEDOS = 6000 - 高精度态密度，精确分析费米能级附近的2DEG特征
+# LORBIT = 11 - 完整的轨道投影信息，支持PDOS分析
+# ICHARG = 11 - 从优化后的电荷密度开始，确保一致性
+# LWAVE = .FALSE. - 电子结构计算不需要保存波函数，节省存储
+# FERWEIGHT = 0.005 - 精确定位费米能级，对2DEG分析至关重要
+#
+# 2DEG分析特殊设置：
+# - 费米能级精确定位是2DEG研究的关键
+# - 高密度k点网格确保表面态分辨
+# - 局域态密度分析电荷分布的2D特征
+# - 电荷密度差分分析表面电荷积累
+
+SYSTEM = SiC Surface Electronic Structure for 2DEG Analysis
+ENCUT = 600
+PREC = Accurate
+ALGO = Normal
+LREAL = Auto
+ADDGRID = .TRUE.
+
+# 收敛标准
+EDIFF = 1E-6        # 高精度能量收敛
+
+# 电子结构参数 (态密度计算优化)
+ISMEAR = -5         # 四面体方法 - 态密度计算最佳
+SIGMA = 0.01        # 精细smearing参数
+NELM = 200
+NELMIN = 8
+
+# 费米能级精确定位 (新增关键参数)
+FERWEIGHT = 0.005   # 从0.01收紧至0.005，提高费米能级精度
+NELECT =            # VASP自动计算，不手动设置
+
+# 高精度态密度设置
+NEDOS = 6000        # 从5000增加至6000，提高分辨率
+LORBIT = 11
+
+# 表面计算特定参数
+LDIPOL = .TRUE.
+IDIPOL = 3
+LVHAR = .TRUE.
+
+# 色散修正
+IVDW = 12
+LVDW = .TRUE.
+
+# 输入输出控制
+ICHARG = 11         # 从已有电荷密度开始
+LCHARG = .TRUE.
+LWAVE = .FALSE.     # 不保存波函数，节省存储
+NWRITE = 2
+
+# 局域态密度和电荷分析
+LPARD = .TRUE.
+EINT = -10.0 5.0    # 扩大能量窗口，覆盖更广泛的电子态
+LVTOT = .TRUE.      # 输出总局域势
+AECCAR0 = .TRUE.    # 输出参考电荷密度
+AECCAR2 = .TRUE.    # 输出电荷密度差分
+
+# 并行优化
+NCORE = 4
+# KPAR = 4          # k点并行，适合高密度网格

@@ -44,3 +44,8 @@ PROCAR
 # Local temp
 tmp/
 temp/
+
+# VASPKIT installation
+vaspkit.*
+*.tar.gz
+
